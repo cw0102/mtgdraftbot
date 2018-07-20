@@ -4,7 +4,7 @@ import { DraftClient } from './draftclient.js'
 import { Collection } from 'discord.js'
 import { Sets, createBooster } from './cards.js'
 
-const kDefaultSet = 'M19';
+const defaultSet = 'M19';
 
 class Draft {
     constructor() {
@@ -20,29 +20,9 @@ class Draft {
      * @returns {string} UUID of the added client
      */
     addClient(name, textCallback, cardCallback) {
-        let c = new DraftClient(name, textCallback, cardCallback);
+        const c = new DraftClient(name, textCallback, cardCallback);
         this.clients.set(c.uuid, c);
         return c.uuid;
-    }
-
-    start() {
-        throw new "begin() is not implemented";
-    }
-
-    cancel() {
-        throw new "cancel() is not implemented";
-    }
-}
-
-export class BoosterDraft extends Draft {
-    constructor(set1, set2, set3) {
-        super();
-        this.set_codes = [set1, set2, set3];
-        for (let i=0; i < this.set_codes.length; i++) {
-            if (!this.set_codes[i] || !Sets.hasOwnProperty(this.set_codes[i])) {
-                this.set_codes[i] = kDefaultSet;
-            }
-        }
     }
 
     start() {
@@ -52,6 +32,38 @@ export class BoosterDraft extends Draft {
 
         this._started = true;
         // Launch async handler for each client
+        // This is where the "magic" happens
+    }
+
+    cancel() {
+        throw new "cancel() is not implemented";
+    }
+}
+
+class PackDraft extends Draft {
+    constructor() {
+        super();
+        this.round = 1;
+    }
+
+    getPack() {
+        throw new "getPack() is not implemented";
+    }
+}
+
+export class BoosterDraft extends PackDraft {
+    constructor(set1, set2, set3) {
+        super();
+        this.set_codes = [set1, set2, set3];
+        for (let i=0; i < this.set_codes.length; i++) {
+            if (!this.set_codes[i] || !Sets.hasOwnProperty(this.set_codes[i])) {
+                this.set_codes[i] = defaultSet;
+            }
+        }
+    }
+
+    getPack(round) {
+        return createBooster(this.set_codes[round]);
     }
 }
 
@@ -68,7 +80,7 @@ export class SealedDraft extends Draft {
     }
 }
 
-export class CubeDraft extends Draft {
+export class CubeDraft extends PackDraft {
     constructor(cube) {
         super();
     }

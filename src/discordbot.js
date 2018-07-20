@@ -5,7 +5,7 @@ import { BoosterDraft } from './draft.js';
 const client = new Client();
 
 /** @type Map.<string, Draft> */
-let channelMap = new Map();
+const channelMap = new Map();
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -16,15 +16,11 @@ client.on('disconnect', () => {
 });
 
 client.on('message', msg => {
-    if (msg.content === 'ping') {
-        msg.reply('pong');
-    }
-
     if (msg.content.startsWith("!")) {
-        let commands = msg.content.substr(1).split(" ");
+        const commands = msg.content.substr(1).split(" ");
         switch(commands[0]) {
             case "startdraft": {
-                let channelid = msg.channelid;
+                const channelid = msg.channelid;
                 if (!channelMap.has(channelid)) {
                     let draftType = "booster";
                     if (commands.length >= 2) {
@@ -71,7 +67,7 @@ client.on('message', msg => {
             } break;
 
             case "stopdraft": {
-                let channelid = msg.channelid;
+                const channelid = msg.channelid;
                 if (channelMap.has(channelid)) {
                     msg.reply("Ending the current session.");
                     channelMap.delete(channelid);
