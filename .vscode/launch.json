@@ -11,7 +11,7 @@
             "cwd": "${workspaceFolder}",
             "runtimeExecutable": "npm",
             "runtimeArgs": [
-                "run-script", "start"
+                "run-script", "discord"
             ],
             "port": 9229
         }
