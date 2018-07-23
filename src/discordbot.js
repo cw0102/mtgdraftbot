@@ -85,4 +85,8 @@ client.on('message', msg => {
     console.log(msg.content);
 });
 
-client.login(discord_token);
+if (discord_token && discord_token.length >= 0) {
+    client.login(discord_token);
+} else {
+    throw "Invalid discord_token";
+}

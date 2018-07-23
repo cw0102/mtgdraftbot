@@ -1,29 +1,53 @@
-import { popSample, sample } from '../src/util.js'
+import { popSample, sample, rotate } from '../src/util.js'
 
 test('popSample removes an item from the passed array and returns it', () => {
-    let arr = [1, 2, 3];
-    let popped = popSample(arr);
+    const arr = [1, 2, 3];
+    const popped = popSample(arr);
     expect(arr.length).toBe(2);
     expect(popped).toBeDefined();
 });
 
 test('popSample returns undefined for zero-length arrays', () => {
-    let arr = [];
-    let popped = popSample(arr);
+    const arr = [];
+    const popped = popSample(arr);
     expect(arr.length).toBe(0);
     expect(popped).toBeUndefined();
 });
 
 test('sample chooses a random item from the passed array and returns it', () => {
-    let arr = [1, 2, 3];
-    let sampled = sample(arr);
+    const arr = [1, 2, 3];
+    const sampled = sample(arr);
     expect(arr.find((a) => a === sampled)).toBeDefined();
     expect(arr.length).toBe(3);
 });
 
 test('sample returns undefined for zero-length arrays', () => {
-    let arr = [];
-    let sampled = sample(arr);
+    const arr = [];
+    const sampled = sample(arr);
     expect(arr.length).toBe(0);
     expect(sampled).toBeUndefined();
+});
+
+test('rotate properly rotates an array 1 place', () => {
+    const arr = [1, 2, 3];
+    rotate(arr, 1);
+    expect(arr).toEqual([2, 3, 1]);
+});
+
+test('rotate properly rotates an array equal to its length', () => {
+    const arr = [1, 2, 3];
+    rotate(arr, arr.length);
+    expect(arr).toEqual([1, 2, 3]);
+});
+
+test('rotate properly rotates an array negative 1 place', () => {
+    const arr = [1, 2, 3];
+    rotate(arr, -1);
+    expect(arr).toEqual([3, 1, 2]);
+});
+
+test('rotate properly rotates an array equal to its negative length', () => {
+    const arr = [1, 2, 3];
+    rotate(arr, -arr.length);
+    expect(arr).toEqual([1, 2, 3]);
 });

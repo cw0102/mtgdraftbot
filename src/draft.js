@@ -3,6 +3,19 @@
 import { DraftClient } from './draftclient.js'
 import { Collection } from 'discord.js'
 import { Sets, createBooster } from './cards.js'
+import { rotate } from './util.js'
+
+/**
+ * @callback textResponseCallback
+ * @param {string} data 
+ * @returns {Promise} A promise with resolved data
+ */
+
+/**
+ * @callback cardResponseCallback
+ * @param {Array<object>} card_array
+ * @returns {Promise} A promise with resolved data
+ */
 
 const defaultSet = 'M19';
 
@@ -13,10 +26,10 @@ class Draft {
     }
 
     /**
-     * 
+     * Create a client
      * @param {string} name The client's name
-     * @param {Function} textCallback The callback to send text to the client.
-     * @param {Function} cardCallback The callback to send cards to the client.
+     * @param {textResponseCallback} textCallback The callback to send text to the client.
+     * @param {cardResponseCallback} cardCallback The callback to send cards to the client.
      * @returns {string} UUID of the added client
      */
     addClient(name, textCallback, cardCallback) {
@@ -31,31 +44,65 @@ class Draft {
         }
 
         this._started = true;
-        // Launch async handler for each client
-        // This is where the "magic" happens
+        handle();
+    }
+
+    handle() {
+        throw "handle() is not implemented";
     }
 
     cancel() {
-        throw new "cancel() is not implemented";
+        throw "cancel() is not implemented";
     }
 }
 
+/**
+ * Abstract class to represent a selection Draft.
+ * Children must define getPack() to source the packs.
+ */
 class PackDraft extends Draft {
     constructor() {
         super();
-        this.round = 1;
     }
 
-    getPack() {
-        throw new "getPack() is not implemented";
+    handle() {
+        for (let round = 0; round < 3; round++) {
+
+            const packs = this.clients.map(() => getPack(round));
+
+            for (let pass = 0; pass < packs[0].length; pass++) {
+                const clientPromises = [];
+
+                for (let slot = 0; slot < packs.length; slot++) {
+                    clientPromises.push(clients[slot].sendCardArray(packs[slot]));
+                };
+
+                Promise.all(clientPromises).then((values) => {
+                    for (let slot = 0; slot < packs.length; slot++) {
+                        clients[slot].draftCard(packs[slot].splice(values[slot], 1)[0]);
+                    }
+                    rotate(packs, 1);
+                }, (reason) => { throw "Client promise failed"; });
+            }
+        }
+    }
+
+    getPack(round) {
+        throw "getPack() is not implemented";
     }
 }
 
 export class BoosterDraft extends PackDraft {
+    /**
+     * @constructor
+     * @param {string} set1 3 character set code for the 1st pack
+     * @param {string} set2 3 character set code for the 2nd pack
+     * @param {string} set3 3 character set code for the 3rd pack
+     */
     constructor(set1, set2, set3) {
         super();
         this.set_codes = [set1, set2, set3];
-        for (let i=0; i < this.set_codes.length; i++) {
+        for (let i = 0; i < this.set_codes.length; i++) {
             if (!this.set_codes[i] || !Sets.hasOwnProperty(this.set_codes[i])) {
                 this.set_codes[i] = defaultSet;
             }
