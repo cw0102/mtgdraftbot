@@ -5,6 +5,8 @@ import { Collection } from 'discord.js'
 import { Sets, createBooster } from './cards.js'
 import { rotate } from './util.js'
 
+const defaultSet = 'M19';
+
 /**
  * @callback textResponseCallback
  * @param {string} data 
@@ -17,9 +19,7 @@ import { rotate } from './util.js'
  * @returns {Promise} A promise with resolved data
  */
 
-const defaultSet = 'M19';
-
-class Draft {
+export class Draft {
     constructor() {
         this._started = false;
         this.clients = new Collection();
@@ -33,9 +33,9 @@ class Draft {
      * @returns {string} UUID of the added client
      */
     addClient(name, textCallback, cardCallback) {
-        const c = new DraftClient(name, textCallback, cardCallback);
-        this.clients.set(c.uuid, c);
-        return c.uuid;
+        const dc = new DraftClient(name, textCallback, cardCallback);
+        this.clients.set(dc.uuid, dc);
+        return dc.uuid;
     }
 
     start() {
