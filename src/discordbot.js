@@ -2,26 +2,19 @@ import { Client, User, Message, DMChannel } from 'discord.js';
 import { discord_token } from "./config.json";
 import { Draft, BoosterDraft } from './draft.js';
 
-class UserWrapper {
-    constructor(id, uuid, draft) {
-        this.id = id;
-        this.uuid = uuid;
-        this.draft = draft;
-    }
-}
-
 const client = new Client();
 
 /** 
  * Map of channelIDs to Drafts 
+ * discord id -> Draft
  * @type Map.<string, Draft>
  */
 const channelMap = new Map();
 
 /**
  * Map of users to user info
- * discord id -> UserWrapper
- * @type Map.<string, UserWrapper>
+ * discord id -> Draft
+ * @type Map.<string, Draft>
  */
 const userMap = new Map();
 
@@ -103,78 +96,120 @@ function messageHandler(msg) {
         const commands = msg.content.substr(1).split(" ");
         switch(commands[0]) {
             case "startdraft": {
-                const channelid = msg.channelid;
-                if (!channelMap.has(channelid)) {
-                    let draftType = "booster";
-                    if (commands.length >= 2) {
-                        draftType = commands[1];
-                    }
-
-                    let draftObj = null;
-                    switch (draftType) {
-                        /*
-                        case "cube": {
-                            draftObj = new CubeDraft();
-                            break;
-                        }
-                        */
-
-                        /*
-                        case "sealed": {
-                            draftObj = new SealedDraft();
-                            break;
-                        }
-                        */
-
-                        case "booster":
-                        default: {
-                            draftObj = new BoosterDraft();
-                            msg.channel.send(`${msg.author} started a Booster Draft! The packs will use the following sets:\n Round 1: [M19], Round 2: [M19], Round 3: [M19]\n Type \`!joindraft\` to join. The creator can start the draft with \`!begindraft\`, or cancel it with \`!stopdraft\`.`);
-                            break;
-                        }
-                    }
-
-                    let uuid = draftObj.addClient(msg.author.id, 
-                        (text) => textCallback(msg.author, text),
-                        (cardArray) => cardCallback(msg.author, cardArray)
-                    );
-                    userMap.set(msg.author.id, new UserWrapper(msg.author.id, uuid, draftObj));
-
-                    channelMap.set(channelid, draftObj);
-                } else {
-                    msg.channel.send("There is already an active session. Use \`!stopdraft\` to cancel it.");
-                }
-            } break;
+                startDraft(msg, commands);
+                break;
+            }
 
             case "begindraft": {
-
-            } break;
+                beginDraft(msg);
+                break;
+            } 
 
             case "joindraft": {
-                if (channelMap.has(channelid)) {
-
-                } else {
-
-                }
-            } break;
+                joinDraft(msg);
+                break;
+            } 
 
             case "stopdraft": {
-                const channelid = msg.channelid;
-                if (channelMap.has(channelid)) {
-                    msg.reply("Ending the current session.");
-                    channelMap.delete(channelid);
-                } else {
-                    msg.reply("There is no active session.");
-                }
-            } break;
+                stopDraft(msg);
+                break;
+            }
 
             case "help": {
                 msg.reply("Help here!");
-            } break;
+                break;
+            }
         }
     }
 
     console.log(msg.content);
+}
+
+/**
+ * Implementation for `!startdraft`
+ * @param {Message} msg The received message 
+ * @param {Array<string>} commands The full command path this command was called with
+ */
+function startDraft(msg, commands) {
+    const channelid = msg.channel.id;
+    if (!channelMap.has(channelid)) {
+        let draftType = "booster";
+        if (commands.length >= 2) {
+            draftType = commands[1];
+        }
+
+        let draftObj = null;
+        switch (draftType) {
+            /*
+            case "cube": {
+                draftObj = new CubeDraft();
+                break;
+            }
+            */
+
+            /*
+            case "sealed": {
+                draftObj = new SealedDraft();
+                break;
+            }
+            */
+
+            case "booster":
+            default: {
+                draftObj = new BoosterDraft();
+                msg.channel.send(`${msg.author} started a Booster Draft! The packs will use the following sets:\n Round 1: [M19], Round 2: [M19], Round 3: [M19]\n Type \`!joindraft\` to join. The creator can start the draft with \`!begindraft\`, or cancel it with \`!stopdraft\`.`);
+                break;
+            }
+        }
+
+        let uuid = draftObj.addClient(msg.author.id, 
+            (text) => textCallback(msg.author, text),
+            (cardArray) => cardCallback(msg.author, cardArray)
+        );
+        userMap.set(msg.author.id, draftObj);
+
+        channelMap.set(channelid, draftObj);
+    } else {
+        msg.channel.send("There is already an active session. Use \`!stopdraft\` to cancel it.");
+    }
+}
+
+function beginDraft(msg) {
+    const channelid = msg.channel.id;
+    if (channelMap.has(channelid)) {
+
+    } else {
+        msg.channel.send("There is not an active draft in this channel. Use \`!startdraft\` to start a draft, or \`!help\` for details.");
+    }
+}
+
+function joinDraft(msg) {
+    const channelid = msg.channel.id;
+    if (channelMap.has(channelid)) {
+        if (userMap.has(msg.author.id)) {
+            msg.reply("You are already in a draft in another channel. Use \`!leavedraft\` to leave your current draft first.");
+        } else {
+            const draft = channelMap[channelid];
+            draft.addClient(msg.author.id, 
+                (text) => textCallback(msg.author, text),
+                (cardArray) => cardCallback(msg.author, cardArray)
+            );
+            userMap.set(msg.author.id, draft);
+            msg.channel.send(`${msg.author} joined the draft!`);
+        }
+    } else {
+        msg.channel.send("There is not an active draft in this channel. Use \`!startdraft\` to start a draft, or \`!help\` for details.");
+    }
+}
+
+function stopDraft(msg) {
+    const channelid = msg.channel.id;
+    if (channelMap.has(channelid)) {
+        msg.reply("Ending the current session.");
+        channelMap.delete(channelid);
+    } else {
+        msg.reply("There is no active session.");
+    }
 }
 
 

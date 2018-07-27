@@ -82,7 +82,7 @@ class PackDraft extends Draft {
                         clients[slot].draftCard(packs[slot].splice(values[slot], 1)[0]);
                     }
                     rotate(packs, 1);
-                }, (reason) => { throw "Client promise failed"; });
+                }, (reason) => { throw `Client promise failed: ${reason}`; });
             }
         }
     }

@@ -19,6 +19,7 @@ export function sample(array) {
 /**
  * Given an array, rotates the array `count` places to the left.
  * This operation happens on the array in place.
+ * A negative value will rotate to the right.
  * @param {Array} arr The array to rotate
  * @param {number} count Number of places to shift
  */
