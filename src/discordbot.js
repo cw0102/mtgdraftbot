@@ -1,6 +1,10 @@
+"use strict";
+
 import { Client, User, Message, DMChannel } from 'discord.js';
 import { discord_token } from "./config.json";
 import { Draft, BoosterDraft } from './draft.js';
+import { isNumber } from './util.js'
+import { EventEmitter } from 'events'
 
 const client = new Client();
 
@@ -41,7 +45,7 @@ function sendToClientDirect(user, msg) {
     if (!dmChannel) {
         user.createDM().then((chan) => chan.send(msg), console.error);
     } else {
-        dmChannel.send(msg).then(console.log, console.error);
+        dmChannel.send(msg).then((m) => console.log(`>From ${user}: ${m}`), console.error);
     }
 }
 
@@ -69,8 +73,9 @@ function cardCallback(user, cardArray) {
     sendToClientDirect(user, text);
     return new Promise((resolve, reject) => {
         const responseFunction = (rmsg) => {
-            if (rmsg.author.id === user.id){
-                resolve(rmsg);
+            const msgText = rmsg.toString();
+            if (rmsg.author.id === user.id && isNumber(msgText)) {
+                resolve(msgText);
                 responseEmitter.removeListener("response", responseFunction);
             }
         }
@@ -122,7 +127,7 @@ function messageHandler(msg) {
         }
     }
 
-    console.log(msg.content);
+    console.log(`From ${msg.author}: ${msg.content}`);
 }
 
 /**
@@ -177,7 +182,11 @@ function startDraft(msg, commands) {
 function beginDraft(msg) {
     const channelid = msg.channel.id;
     if (channelMap.has(channelid)) {
-
+        const draft = channelMap.get(channelid);
+        if (!draft.started()) {
+            msg.channel.send(`Starting the draft with ${draft.clients.length} users!`);
+            draft.start();
+        }
     } else {
         msg.channel.send("There is not an active draft in this channel. Use \`!startdraft\` to start a draft, or \`!help\` for details.");
     }
@@ -189,7 +198,7 @@ function joinDraft(msg) {
         if (userMap.has(msg.author.id)) {
             msg.reply("You are already in a draft in another channel. Use \`!leavedraft\` to leave your current draft first.");
         } else {
-            const draft = channelMap[channelid];
+            const draft = channelMap.get(channelid);
             draft.addClient(msg.author.id, 
                 (text) => textCallback(msg.author, text),
                 (cardArray) => cardCallback(msg.author, cardArray)
@@ -205,10 +214,10 @@ function joinDraft(msg) {
 function stopDraft(msg) {
     const channelid = msg.channel.id;
     if (channelMap.has(channelid)) {
-        msg.reply("Ending the current session.");
+        msg.channel.send("Ending the current session.");
         channelMap.delete(channelid);
     } else {
-        msg.reply("There is no active session.");
+        msg.channel.send("There is no active session.");
     }
 }
 

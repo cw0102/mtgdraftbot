@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Given an array, selects a random element and pops it from the array.
  * This will modify the array.
@@ -32,4 +34,13 @@ export function rotate(arr, count) {
 
     Array.prototype.push.apply(arr, Array.prototype.splice.call(arr, 0, count));
     return count;
+}
+
+/**
+ * Determines if the given argument is a number
+ * @param {string} maybeNumber The string to test
+ * @returns {Boolean} If `maybeNumber` is a number
+ */
+export function isNumber(maybeNumber) {
+    return !isNaN(parseFloat(maybeNumber)) && isFinite(maybeNumber);
 }

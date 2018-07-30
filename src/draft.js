@@ -38,13 +38,17 @@ export class Draft {
         return dc.uuid;
     }
 
+    started() {
+        return this._started;
+    }
+
     start() {
         if (this._started) {
             return;
         }
 
         this._started = true;
-        handle();
+        this.handle();
     }
 
     handle() {
@@ -68,7 +72,7 @@ class PackDraft extends Draft {
     handle() {
         for (let round = 0; round < 3; round++) {
 
-            const packs = this.clients.map(() => getPack(round));
+            const packs = this.clients.map(() => this.getPack(round));
 
             for (let pass = 0; pass < packs[0].length; pass++) {
                 const clientPromises = [];

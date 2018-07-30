@@ -1,3 +1,5 @@
+"use strict";
+
 import { v1 as uuidv1 } from 'uuid'
 
 /**
@@ -18,7 +20,7 @@ export class DraftClient {
      * @param {textResponseCallback} textCallback The callback to send text to the client.
      * @param {cardResponseCallback} cardCallback The callback to send cards to the client.
      */
-    constuctor(name, textCallback, cardCallback) {
+    constructor(name, textCallback, cardCallback) {
         this.uuid = uuidv1();
         this.name = name;
         this.textCallback = textCallback;
