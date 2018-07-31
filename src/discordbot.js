@@ -22,7 +22,7 @@ const channelMap = new Map();
  */
 const userMap = new Map();
 
-const responseTimeLimit = 90000;
+const responseTimeLimit = 120000;
 const responseEmitter = new EventEmitter();
 
 client.on('ready', () => {
@@ -63,27 +63,27 @@ function textCallback(user, text) {
 /**
  * The callback to handle cardArray messages
  * @param {User} user The User
- * @param {string} cardArray The card array to pass to the user
+ * @param {Array} cardArray The card array to pass to the user
  * @returns {Promise<Array>}
  */
 function cardCallback(user, cardArray) {
     const text = cardArray.reduce((prev, current, index) => {
-        return prev + `${index}: ${current.name}\n`
+        return prev + `${index+1}: ${current.name}\n`
     }, "");
     sendToClientDirect(user, text);
     return new Promise((resolve, reject) => {
         const responseFunction = (rmsg) => {
             const msgText = rmsg.toString();
             if (rmsg.author.id === user.id && isNumber(msgText)) {
-                resolve(msgText);
+                resolve(msgText+1);
                 responseEmitter.removeListener("response", responseFunction);
             }
         }
         responseEmitter.on("response", responseFunction);
-        setTimeout(() => {
+        /*setTimeout(() => {
             responseEmitter.removeListener("response", responseFunction);
-            reject("Timed out");
-        }, responseTimeLimit);
+            reject(`${user.username}#${user.discriminator} timed out`);
+        }, responseTimeLimit);*/
     });
 }
 
@@ -127,7 +127,7 @@ function messageHandler(msg) {
         }
     }
 
-    console.log(`From ${msg.author}: ${msg.content}`);
+    console.log(`From ${msg.author.username}#${msg.author.discriminator}: ${msg.content}`);
 }
 
 /**
@@ -184,8 +184,10 @@ function beginDraft(msg) {
     if (channelMap.has(channelid)) {
         const draft = channelMap.get(channelid);
         if (!draft.started()) {
-            msg.channel.send(`Starting the draft with ${draft.clients.length} users!`);
+            msg.channel.send(`Starting the draft with ${draft.clients.size} users!`);
             draft.start();
+        } else {
+            msg.channel.send("This channel already has an active draft!");
         }
     } else {
         msg.channel.send("There is not an active draft in this channel. Use \`!startdraft\` to start a draft, or \`!help\` for details.");

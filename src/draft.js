@@ -22,6 +22,9 @@ const defaultSet = 'M19';
 export class Draft {
     constructor() {
         this._started = false;
+        /**
+         * @type {Collection<string, DraftClient>}
+         */
         this.clients = new Collection();
     }
 
@@ -69,30 +72,42 @@ class PackDraft extends Draft {
         super();
     }
 
-    handle() {
-        for (let round = 0; round < 3; round++) {
-
+    async handle() {
+        const clientsArray = this.clients.array();
+        for (let round = 0; round < this.getPackCount(); round++) {
             const packs = this.clients.map(() => this.getPack(round));
+            const packSize = packs[0].length;
 
-            for (let pass = 0; pass < packs[0].length; pass++) {
+            const getPickResult = async () => {
                 const clientPromises = [];
 
-                for (let slot = 0; slot < packs.length; slot++) {
-                    clientPromises.push(clients[slot].sendCardArray(packs[slot]));
+                for (let slot = 0; slot < this.clients.size; slot++) {
+                    clientPromises.push(clientsArray[slot].sendCardArray(packs[slot]));
                 };
 
-                Promise.all(clientPromises).then((values) => {
+                return Promise.all(clientPromises);
+            }
+
+            for (let pass = 0; pass < packSize; pass++) {
+                try {
+                    const pickResult = await getPickResult();
                     for (let slot = 0; slot < packs.length; slot++) {
-                        clients[slot].draftCard(packs[slot].splice(values[slot], 1)[0]);
+                        clientsArray[slot].draftCard(packs[slot].splice(pickResult[slot], 1)[0]);
                     }
-                    rotate(packs, 1);
-                }, (reason) => { throw `Client promise failed: ${reason}`; });
+                    rotate(packs, round % 2 == 0 ? 1 : -1);
+                } catch (error) {
+                    console.error(`Pick Error: ${error}`);
+                }
             }
         }
     }
 
-    getPack(round) {
+    getPack() {
         throw "getPack() is not implemented";
+    }
+
+    getPackCount() {
+        throw "getPackCount() is not implemented";
     }
 }
 
@@ -115,6 +130,10 @@ export class BoosterDraft extends PackDraft {
 
     getPack(round) {
         return createBooster(this.set_codes[round]);
+    }
+
+    getPackCount() {
+        return 3;
     }
 }
 
