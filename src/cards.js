@@ -1,20 +1,25 @@
-"use strict";
+'use strict';
 
-import { popSample, sample } from './util.js'
-import { readFileSync } from 'fs'
+import {popSample, sample} from './util.js';
+import {readFileSync} from 'fs';
 
 export const Sets = JSON.parse(readFileSync('data/AllSets.json'));
 
 export const basicLands = Object.freeze(['Forest', 'Island', 'Mountain', 'Swamp', 'Plains']);
 
+/**
+ * Creates a random booster of the given `set`
+ * @param {string} set 3 character set code
+ * @return {Array} A pack of the given `set`
+ */
 export function createBooster(set) {
     const currentSet = Sets[set];
-    const cards = currentSet["cards"];
-    const setMythics = cards.filter(card => card.rarity == "Mythic Rare");
-    const setRares = cards.filter(card => card.rarity == "Rare");
-    const setUncommons = cards.filter(card => card.rarity == "Uncommon");
-    const setCommons = cards.filter(card => card.rarity == "Common");
-    const setBasicLands = cards.filter(card => card.rarity == "Basic Land").reduce((prev, current) => {
+    const cards = currentSet.cards;
+    const setMythics = cards.filter((card) => card.rarity == 'Mythic Rare');
+    const setRares = cards.filter((card) => card.rarity == 'Rare');
+    const setUncommons = cards.filter((card) => card.rarity == 'Uncommon');
+    const setCommons = cards.filter((card) => card.rarity == 'Common');
+    const setBasicLands = cards.filter((card) => card.rarity == 'Basic Land').reduce((prev, current) => {
         if (!prev.has(current.name)) {
             prev.set(current.name, []);
         }
@@ -22,14 +27,14 @@ export function createBooster(set) {
         return prev;
     }, new Map());
 
-    const packLayout = currentSet["booster"];
+    const packLayout = currentSet['booster'];
 
     const pack = [];
 
     for (let i = 0; i < packLayout.length; i++) {
         let current = packLayout[i];
         if (current instanceof Array) {
-            if (current.length === 2 && current.includes("rare") && current.includes("mythic rare")) {
+            if (current.length === 2 && current.includes('rare') && current.includes('mythic rare')) {
                 if (Math.random() < 0.125) { // 1/8 of rare = mythic
                     pack.push(popSample(setMythics));
                 } else {
@@ -37,20 +42,20 @@ export function createBooster(set) {
                 }
             }
         }
-        if (current === "common") {
+        if (current === 'common') {
             pack.push(popSample(setCommons));
-        } else if (current === "uncommon") {
+        } else if (current === 'uncommon') {
             pack.push(popSample(setUncommons));
-        } else if (current === "rare") {
+        } else if (current === 'rare') {
             pack.push(popSample(setRares));
-        } else if (current === "mythic rare") {
+        } else if (current === 'mythic rare') {
             pack.push(popSample(setMythics));
-        } else if (current === "land") {
-            if (set === "M19") {
-                const m19DualLandNames = ["Cinder Barrens", "Forsaken Sanctuary", "Foul Orchard",
-                "Highland Lake", "Meandering River", "Stone Quarry",
-                "Submerged Boneyard", "Timber Gorge", "Tranquil Expanse",
-                "Woodland Stream"];
+        } else if (current === 'land') {
+            if (set === 'M19') {
+                const m19DualLandNames = ['Cinder Barrens', 'Forsaken Sanctuary', 'Foul Orchard',
+                'Highland Lake', 'Meandering River', 'Stone Quarry',
+                'Submerged Boneyard', 'Timber Gorge', 'Tranquil Expanse',
+                'Woodland Stream'];
                 const dualLands = cards.filter((card) =>
                     m19DualLandNames.findIndex((cn) => cn === card.name) != -1
                 );

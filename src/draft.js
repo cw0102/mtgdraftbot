@@ -1,15 +1,15 @@
-"use strict";
+'use strict';
 
-import { DraftClient } from './draftclient.js'
-import { Collection } from 'discord.js'
-import { Sets, createBooster } from './cards.js'
-import { rotate } from './util.js'
+import {DraftClient} from './draftclient.js';
+import {Collection} from 'discord.js';
+import {Sets, createBooster} from './cards.js';
+import {rotate} from './util.js';
 
 const defaultSet = 'M19';
 
 /**
  * @callback textResponseCallback
- * @param {string} data 
+ * @param {string} data
  * @returns {Promise} A promise with resolved data
  */
 
@@ -19,7 +19,13 @@ const defaultSet = 'M19';
  * @returns {Promise} A promise with resolved data
  */
 
+ /**
+  * Represents a Draft of any kind
+  */
 export class Draft {
+    /**
+     * Base constructor for a Draft
+     */
     constructor() {
         this._started = false;
         /**
@@ -33,7 +39,7 @@ export class Draft {
      * @param {string} name The client's name
      * @param {textResponseCallback} textCallback The callback to send text to the client.
      * @param {cardResponseCallback} cardCallback The callback to send cards to the client.
-     * @returns {string} UUID of the added client
+     * @return {string} UUID of the added client
      */
     addClient(name, textCallback, cardCallback) {
         const dc = new DraftClient(name, textCallback, cardCallback);
@@ -41,10 +47,27 @@ export class Draft {
         return dc.uuid;
     }
 
+    /**
+     * Drops a client from the draft. This may require
+     * additional cleanup depending on the draft type.
+     * @param {string} uuid The uuid of the client
+     */
+    dropClient(uuid) {
+        if (this.clients.has(uuid)) {
+            this.clients.delete(uuid);
+        }
+    }
+
+    /**
+     * @return {Boolean} If the draft has started or not
+     */
     started() {
         return this._started;
     }
 
+    /**
+     * Begin the draft
+     */
     start() {
         if (this._started) {
             return;
@@ -54,12 +77,18 @@ export class Draft {
         this.handle();
     }
 
-    handle() {
-        throw "handle() is not implemented";
+    /**
+     * Abstract function for handling the draft
+     */
+    async handle() {
+        throw new Error('handle() is not implemented');
     }
 
+    /**
+     * Abstract function for cancelling the draft
+     */
     cancel() {
-        throw "cancel() is not implemented";
+        throw new Error('cancel() is not implemented');
     }
 }
 
@@ -68,10 +97,18 @@ export class Draft {
  * Children must define getPack() to source the packs.
  */
 class PackDraft extends Draft {
+    /**
+     * @class PackDraft
+     */
     constructor() {
         super();
     }
 
+    /**
+     * Handle the PackDraft. Generate packs, send
+     * them to clients, and collect picks, then
+     * send the pool to clients.
+     */
     async handle() {
         const clientsArray = this.clients.array();
         for (let round = 0; round < this.getPackCount(); round++) {
@@ -82,11 +119,11 @@ class PackDraft extends Draft {
                 const clientPromises = [];
 
                 for (let slot = 0; slot < this.clients.size; slot++) {
-                    clientPromises.push(clientsArray[slot].sendCardArray(packs[slot]));
+                    clientPromises.push(clientsArray[slot].sendCardChoiceArray(packs[slot]));
                 };
 
                 return Promise.all(clientPromises);
-            }
+            };
 
             for (let pass = 0; pass < packSize; pass++) {
                 try {
@@ -102,15 +139,25 @@ class PackDraft extends Draft {
         }
     }
 
+    /**
+     * Abstract function for generating a pack
+     */
     getPack() {
-        throw "getPack() is not implemented";
+        throw new Error('getPack() is not implemented');
     }
 
+    /**
+     * Abstract function for the number of rounds
+     * of drafting
+     */
     getPackCount() {
-        throw "getPackCount() is not implemented";
+        throw new Error('getPackCount() is not implemented');
     }
 }
 
+/**
+ * Represents a draft using 3 boosters from 1-3 sets.
+ */
 export class BoosterDraft extends PackDraft {
     /**
      * @constructor
@@ -128,10 +175,19 @@ export class BoosterDraft extends PackDraft {
         }
     }
 
+    /**
+     * Generate a booster from the given set for
+     * the current round.
+     * @param {number} round The current round number
+     * @return {Array} The pack
+     */
     getPack(round) {
         return createBooster(this.set_codes[round]);
     }
 
+    /**
+     * @return {number} The The number of packs in a BoosterDraft
+     */
     getPackCount() {
         return 3;
     }

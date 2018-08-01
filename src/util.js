@@ -1,10 +1,10 @@
-"use strict";
+'use strict';
 
 /**
  * Given an array, selects a random element and pops it from the array.
  * This will modify the array.
  * @param {Array} array The array to sample
- * @returns The popped element
+ * @return {any} The popped element
  */
 export function popSample(array) {
     return array.splice(Math.floor(Math.random() * array.length), 1)[0];
@@ -13,6 +13,7 @@ export function popSample(array) {
 /**
  * Given an array, selects a random element and returns it.
  * @param {Array} array The array to sample
+ * @return {any} The sampled element
  */
 export function sample(array) {
     return array[Math.floor(Math.random() * array.length)];
@@ -33,13 +34,12 @@ export function rotate(arr, count) {
     count = ((count % len) + len) % len;
 
     Array.prototype.push.apply(arr, Array.prototype.splice.call(arr, 0, count));
-    return count;
 }
 
 /**
  * Determines if the given argument is a number
  * @param {string} maybeNumber The string to test
- * @returns {Boolean} If `maybeNumber` is a number
+ * @return {Boolean} If `maybeNumber` is a number
  */
 export function isNumber(maybeNumber) {
     return !isNaN(parseFloat(maybeNumber)) && isFinite(maybeNumber);
