@@ -147,7 +147,7 @@ function messageHandler(msg) {
 }
 
 /**
- * Implementation for `!startdraft`
+ * Open a new draft in the current channel
  * @param {Message} msg The received message
  * @param {Array<string>} commands The full command path this command was called with
  */
