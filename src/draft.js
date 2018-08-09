@@ -14,7 +14,7 @@ const defaultSet = 'M19';
  */
 
 /**
- * @callback cardResponseCallback
+ * @callback cardChoiceCallback
  * @param {Array<object>} card_array
  * @returns {Promise} A promise with resolved data
  */
@@ -38,11 +38,12 @@ export class Draft {
      * Create a client
      * @param {string} name The client's name
      * @param {textResponseCallback} textCallback The callback to send text to the client.
-     * @param {cardResponseCallback} cardCallback The callback to send cards to the client.
+     * @param {cardChoiceCallback} cardChoiceCallback The callback to send cards to the client.
+     * @param {cardPoolCallback} cardPoolCallback The callback to send the current pool to the client.
      * @return {string} UUID of the added client
      */
-    addClient(name, textCallback, cardCallback) {
-        const dc = new DraftClient(name, textCallback, cardCallback);
+    addClient(name, textCallback, cardChoiceCallback, cardPoolCallback) {
+        const dc = new DraftClient(name, textCallback, cardChoiceCallback, cardPoolCallback);
         this.clients.set(dc.uuid, dc);
         return dc.uuid;
     }
@@ -136,6 +137,10 @@ class PackDraft extends Draft {
                     console.error(`Pick Error: ${error}`);
                 }
             }
+        }
+
+        for (let client of clientsArray) {
+            client.sendPool();
         }
     }
 

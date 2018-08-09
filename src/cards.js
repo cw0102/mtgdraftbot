@@ -7,6 +7,35 @@ export const Sets = JSON.parse(readFileSync('data/AllSets.json'));
 
 export const basicLands = Object.freeze(['Forest', 'Island', 'Mountain', 'Swamp', 'Plains']);
 
+/*
+export class Card {
+
+    constructor() {
+        this.artist = '';
+        this.cmc = 0;
+        this.colorIdentity = [];
+        this.colors = [];
+        this.flavor = '';
+        this.id = '';
+        this.imageName = '';
+        this.layout = '';
+        this.manaCost = '';
+        this.multiverseid = 0;
+        this.name = '';
+        this.number = '';
+        this.power = 0;
+        this.rarity = '';
+        this.subtypes = [];
+        this.text = '';
+        this.toughness = 0;
+        this.type = '';
+        this.types = [];
+
+        Object.seal(this);
+    }
+}
+*/
+
 /**
  * Creates a random booster of the given `set`
  * @param {string} set 3 character set code
@@ -34,8 +63,8 @@ export function createBooster(set) {
     for (let i = 0; i < packLayout.length; i++) {
         let current = packLayout[i];
         if (current instanceof Array) {
-            if (current.length === 2 && current.includes('rare') && current.includes('mythic rare')) {
-                if (Math.random() < 0.125) { // 1/8 of rare = mythic
+            if (setMythics.length > 0 && current.length === 2 && current.includes('rare') && current.includes('mythic rare')) {
+                if (Math.random() < 0.125) { // ~1/8 of rare = mythic
                     pack.push(popSample(setMythics));
                 } else {
                     pack.push(popSample(setRares));

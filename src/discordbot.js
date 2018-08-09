@@ -1,6 +1,6 @@
 'use strict';
 
-import {Client, User, Message, DMChannel} from 'discord.js';
+import {Client, User, Message, DMChannel, Collection} from 'discord.js';
 import {discordToken} from './config.json';
 import {Draft, BoosterDraft} from './draft.js';
 import {isNumber} from './util.js';
@@ -36,9 +36,9 @@ class UserWrapper {
  * discord id -> Draft
  * @type Map.<string, UserWrapper>
  */
-const userMap = new Map();
+const userMap = new Collection();
 
-const responseTimeLimit = 120000;
+const responseTimeLimit = 180000;
 const responseEmitter = new EventEmitter();
 
 client.on('ready', () => {
@@ -80,7 +80,7 @@ function textCallback(user, text) {
  * The callback to handle cardArray messages
  * @param {User} user The User
  * @param {Array} cardArray The card array to pass to the user
- * @return {Promise<Array>}
+ * @return {Promise<Array>} A promise that resolves with the user response
  */
 function cardChoiceCallback(user, cardArray) {
     const text = cardArray.reduce((prev, current, index) => {
@@ -91,7 +91,7 @@ function cardChoiceCallback(user, cardArray) {
         const responseFunction = (rmsg) => {
             const msgText = rmsg.toString();
             if (rmsg.author.id === user.id && isNumber(msgText)) {
-                resolve(msgText+1);
+                resolve(msgText-1);
                 responseEmitter.removeListener('response', responseFunction);
             }
         };
@@ -104,20 +104,40 @@ function cardChoiceCallback(user, cardArray) {
 }
 
 /**
+ * The callback to handle displaying the user's card pool
+ * @param {User} user The User
+ * @param {Map<Card, number>} cardMap The card map to pass to the user
+ */
+function cardPoolCallback(user, cardMap) {
+    let text = 'Card Pool:\n----------\n';
+    for (const current of cardMap) {
+        text += `${current[1]}x ${current[0].name}\n`;
+    }
+    sendToClientDirect(user, text);
+}
+
+/**
  * Message handler
  * @param {Message} msg The incoming message
  */
 function messageHandler(msg) {
     if (msg.channel instanceof DMChannel) {
-        responseEmitter.emit('response', msg);
+        if (msg.content === '!pool') {
+            if (userMap.has(msg.author.id)) {
+                const userInfo = userMap.get(msg.author.id);
+                userInfo.draft.clients.get(userInfo.uuid).sendPool();
+            }
+        } else {
+            responseEmitter.emit('response', msg);
+        }
         return;
     }
 
     if (msg.content.startsWith('!')) {
         const commands = msg.content.substr(1).split(' ');
         switch (commands[0]) {
-            case 'startdraft': {
-                startDraft(msg, commands);
+            case 'draft': {
+                openDraft(msg, commands);
                 break;
             }
 
@@ -151,7 +171,7 @@ function messageHandler(msg) {
  * @param {Message} msg The received message
  * @param {Array<string>} commands The full command path this command was called with
  */
-function startDraft(msg, commands) {
+function openDraft(msg, commands) {
     const channelid = msg.channel.id;
     if (!channelMap.has(channelid)) {
         let draftType = 'booster';
@@ -185,7 +205,8 @@ function startDraft(msg, commands) {
 
         const uuid = draftObj.addClient(msg.author.id,
             (text) => textCallback(msg.author, text),
-            (cardArray) => cardChoiceCallback(msg.author, cardArray)
+            (cardArray) => cardChoiceCallback(msg.author, cardArray),
+            (cardMap) => cardPoolCallback(msg.author, cardMap)
         );
         userMap.set(msg.author.id, new UserWrapper(uuid, draftObj));
 
@@ -210,7 +231,7 @@ function beginDraft(msg) {
             msg.channel.send('This channel already has an active draft!');
         }
     } else {
-        msg.channel.send('There is not an active draft in this channel. Use \`!startdraft\` to start a draft, or \`!help\` for details.');
+        msg.channel.send('There is not an active draft in this channel. Use \`!draft\` to start a draft, or \`!help\` for details.');
     }
 }
 
@@ -227,13 +248,14 @@ function joinDraft(msg) {
             const draft = channelMap.get(channelid);
             const uuid = draft.addClient(msg.author.id,
                 (text) => textCallback(msg.author, text),
-                (cardArray) => cardChoiceCallback(msg.author, cardArray)
+                (cardArray) => cardChoiceCallback(msg.author, cardArray),
+                (cardMap) => cardPoolCallback(msg.author, cardMap)
             );
-            userMap.set(msg.author.id, new UserWrapper(uuid, draftObj));
+            userMap.set(msg.author.id, new UserWrapper(uuid, draft));
             msg.channel.send(`${msg.author} joined the draft!`);
         }
     } else {
-        msg.channel.send('There is not an active draft in this channel. Use \`!startdraft\` to start a draft, or \`!help\` for details.');
+        msg.channel.send('There is not an active draft in this channel. Use \`!draft\` to start a draft, or \`!help\` for details.');
     }
 }
 
@@ -245,6 +267,8 @@ function stopDraft(msg) {
     const channelid = msg.channel.id;
     if (channelMap.has(channelid)) {
         msg.channel.send('Ending the current session.');
+        const draft = channelMap.get(channelid);
+        userMap.sweep((userInfo) => userInfo.draft === draft);
         channelMap.delete(channelid);
     } else {
         msg.channel.send('There is no active session.');
