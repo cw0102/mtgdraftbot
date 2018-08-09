@@ -25,13 +25,15 @@ const defaultSet = 'M19';
 export class Draft {
     /**
      * Base constructor for a Draft
+     * @param {Function} cleanupCallback Callback to close out a draft
      */
-    constructor() {
+    constructor(cleanupCallback) {
         this._started = false;
         /**
          * @type {Collection<string, DraftClient>}
          */
         this.clients = new Collection();
+        this.cleanupCallback = cleanupCallback;
     }
 
     /**
@@ -100,9 +102,10 @@ export class Draft {
 class PackDraft extends Draft {
     /**
      * @class PackDraft
+     * @param {Function} cleanupCallback Callback to close out a draft
      */
-    constructor() {
-        super();
+    constructor(cleanupCallback) {
+        super(cleanupCallback);
     }
 
     /**
@@ -142,6 +145,8 @@ class PackDraft extends Draft {
         for (let client of clientsArray) {
             client.sendPool();
         }
+
+        this.cleanupCallback(this);
     }
 
     /**
@@ -166,12 +171,13 @@ class PackDraft extends Draft {
 export class BoosterDraft extends PackDraft {
     /**
      * @constructor
+     * @param {Function} cleanupCallback Callback to close out a draft
      * @param {string} set1 3 character set code for the 1st pack
      * @param {string} set2 3 character set code for the 2nd pack
      * @param {string} set3 3 character set code for the 3rd pack
      */
-    constructor(set1, set2, set3) {
-        super();
+    constructor(cleanupCallback, set1, set2, set3) {
+        super(cleanupCallback);
         this.set_codes = [set1, set2, set3];
         for (let i = 0; i < this.set_codes.length; i++) {
             if (!this.set_codes[i] || !Sets.hasOwnProperty(this.set_codes[i])) {
@@ -200,8 +206,8 @@ export class BoosterDraft extends PackDraft {
 
 /*
 export class SealedDraft extends Draft {
-    constructor (set1, set2, set3, set4, set5, set6) {
-        super();
+    constructor (cleanupCallback, set1, set2, set3, set4, set5, set6) {
+        super(cleanupCallback);
         this.set_codes = [set1, set2, set3, set4, set5, set6];
         for (let i=0; i < this.set_codes.length; i++) {
             if (!this.set_codes[i] || !Sets.hasOwnProperty(this.set_codes[i])) {

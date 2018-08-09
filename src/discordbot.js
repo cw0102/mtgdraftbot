@@ -11,9 +11,9 @@ const client = new Client();
 /**
  * Map of channelIDs to Drafts
  * discord id -> Draft
- * @type Map.<string, Draft>
+ * @type Collection.<string, Draft>
  */
-const channelMap = new Map();
+const channelMap = new Collection();
 
 /**
  * Wraps User details for use
@@ -34,7 +34,7 @@ class UserWrapper {
 /**
  * Map of users to user info
  * discord id -> Draft
- * @type Map.<string, UserWrapper>
+ * @type Collection.<string, UserWrapper>
  */
 const userMap = new Collection();
 
@@ -109,11 +109,20 @@ function cardChoiceCallback(user, cardArray) {
  * @param {Map<Card, number>} cardMap The card map to pass to the user
  */
 function cardPoolCallback(user, cardMap) {
-    let text = 'Card Pool:\n----------\n';
-    for (const current of cardMap) {
-        text += `${current[1]}x ${current[0].name}\n`;
+    let text = 'Card Pool:\n\n';
+    for (const [current, count] of cardMap) {
+        text += `${count}x ${current.name}\n`;
     }
     sendToClientDirect(user, text);
+}
+
+/**
+ * Cleanup after completed draft
+ * @param {Draft} draft The draft object
+ */
+function cleanupDraft(draft) {
+    channelMap.sweep((cDraft) => cDraft === draft);
+    userMap.sweep((userInfo) => userInfo.draft === draft);
 }
 
 /**
@@ -197,7 +206,7 @@ function openDraft(msg, commands) {
 
             case 'booster':
             default: {
-                draftObj = new BoosterDraft();
+                draftObj = new BoosterDraft(cleanupDraft);
                 msg.channel.send(`${msg.author} started a Booster Draft! The packs will use the following sets:\n Round 1: [M19], Round 2: [M19], Round 3: [M19]\n Type \`!joindraft\` to join. The creator can start the draft with \`!begindraft\`, or cancel it with \`!stopdraft\`.`);
                 break;
             }
@@ -268,8 +277,7 @@ function stopDraft(msg) {
     if (channelMap.has(channelid)) {
         msg.channel.send('Ending the current session.');
         const draft = channelMap.get(channelid);
-        userMap.sweep((userInfo) => userInfo.draft === draft);
-        channelMap.delete(channelid);
+        cleanupDraft(draft);
     } else {
         msg.channel.send('There is no active session.');
     }
