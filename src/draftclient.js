@@ -70,4 +70,14 @@ export class DraftClient {
     draftCard(card) {
         this.cards.set(card, this.cards.has(card) ? this.cards.get(card) + 1 : 1);
     }
+
+    /**
+     * Adds an array of cards to the client's collection
+     * @param {Array<Card>} cardArray The array of cards to add to the client
+     */
+    draftPack(cardArray) {
+        for (const card of cardArray) {
+            this.draftCard(card);
+        }
+    }
 }

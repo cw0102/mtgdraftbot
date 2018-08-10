@@ -15,7 +15,7 @@ const defaultSet = 'M19';
 
 /**
  * @callback cardChoiceCallback
- * @param {Array<object>} card_array
+ * @param {Array<object>} cardArray
  * @returns {Promise} A promise with resolved data
  */
 
@@ -85,13 +85,6 @@ export class Draft {
      */
     async handle() {
         throw new Error('handle() is not implemented');
-    }
-
-    /**
-     * Abstract function for cancelling the draft
-     */
-    cancel() {
-        throw new Error('cancel() is not implemented');
     }
 }
 
@@ -178,10 +171,10 @@ export class BoosterDraft extends PackDraft {
      */
     constructor(cleanupCallback, set1, set2, set3) {
         super(cleanupCallback);
-        this.set_codes = [set1, set2, set3];
-        for (let i = 0; i < this.set_codes.length; i++) {
-            if (!this.set_codes[i] || !Sets.hasOwnProperty(this.set_codes[i])) {
-                this.set_codes[i] = defaultSet;
+        this.setCodes = [set1, set2, set3];
+        for (let i = 0; i < this.setCodes.length; i++) {
+            if (!this.setCodes[i] || !Sets.hasOwnProperty(this.setCodes[i])) {
+                this.setCodes[i] = defaultSet;
             }
         }
     }
@@ -193,7 +186,7 @@ export class BoosterDraft extends PackDraft {
      * @return {Array} The pack
      */
     getPack(round) {
-        return createBooster(this.set_codes[round]);
+        return createBooster(this.setCodes[round]);
     }
 
     /**
@@ -204,19 +197,62 @@ export class BoosterDraft extends PackDraft {
     }
 }
 
-/*
+/**
+ * Represents a limited pool using a single box of 6 boosters
+ */
 export class SealedDraft extends Draft {
-    constructor (cleanupCallback, set1, set2, set3, set4, set5, set6) {
+    /**
+     * @constructor
+     * @param {Function} cleanupCallback Callback to close out a draft
+     * @param {Array} setsArray An array of the set codes to use for packs.
+     * Length must be a factor of 6. If a factor and less than 6, will be repeated to fill 6 packs.
+     */
+    constructor(cleanupCallback, setsArray) {
         super(cleanupCallback);
-        this.set_codes = [set1, set2, set3, set4, set5, set6];
-        for (let i=0; i < this.set_codes.length; i++) {
-            if (!this.set_codes[i] || !Sets.hasOwnProperty(this.set_codes[i])) {
-                this.set_codes[i] = kDefaultSet;
+        this.setCodes = [];
+        if (!setsArray) {
+            setsArray = [];
+        }
+        if (6 % setsArray.length === 0) {
+            const setsLoopCount = 6 / setsArray.length;
+            for (let i=0; i < setsLoopCount; i++) {
+                for (let j=0; j < setsArray.length; j++) {
+                    const setCode = setsArray[j];
+                    if (!setCode || !Sets.hasOwnProperty(setCode)) {
+                        this.setCodes.push(defaultSet);
+                    } else {
+                        this.setCodes.push(setCode);
+                    }
+                }
+            }
+        } else {
+            for (let i=0; i < 6; i++) {
+                this.setCodes.push(defaultSet);
             }
         }
     }
+
+    /**
+     * Handle the SealedDraft. Send packs to clients and end.
+     */
+    handle() {
+        const clientsArray = this.clients.array();
+        for (const client of clientsArray) {
+            console.log(this.setCodes);
+            for (let i=0; i < 6; i ++) {
+                client.draftPack(createBooster(this.setCodes[i]));
+            }
+        }
+
+        for (let client of clientsArray) {
+            client.sendPool();
+        }
+
+        this.cleanupCallback(this);
+    }
 }
 
+/*
 export class CubeDraft extends PackDraft {
     constructor(cube) {
         super();

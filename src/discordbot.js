@@ -2,7 +2,7 @@
 
 import {Client, User, Message, DMChannel, Collection} from 'discord.js';
 import {discordToken} from './config.json';
-import {Draft, BoosterDraft} from './draft.js';
+import {Draft, BoosterDraft, SealedDraft} from './draft.js';
 import {isNumber} from './util.js';
 import {EventEmitter} from 'events';
 
@@ -197,12 +197,11 @@ function openDraft(msg, commands) {
             }
             */
 
-            /*
             case 'sealed': {
-                draftObj = new SealedDraft();
+                draftObj = new SealedDraft(cleanupDraft);
+                msg.channel.send(`${msg.author} started a Sealed Draft! The packs will use the following set:\n [M19]\n Type \`!joindraft\` to join. The creator can start the draft with \`!begindraft\`, or cancel it with \`!stopdraft\`.`);
                 break;
             }
-            */
 
             case 'booster':
             default: {
