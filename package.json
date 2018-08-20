@@ -10,7 +10,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "discord.js": "^11.4.0",
+    "discord.js": "^11.4.2",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
@@ -18,9 +18,9 @@
     "babel-core": "^6.26.3",
     "babel-jest": "^23.4.2",
     "babel-preset-env": "^1.7.0",
-    "eslint": "^5.3.0",
+    "eslint": "^5.4.0",
     "eslint-config-google": "^0.9.1",
-    "jest": "^23.4.2",
+    "jest": "^23.5.0",
     "regenerator-runtime": "^0.12.1"
   }
 }

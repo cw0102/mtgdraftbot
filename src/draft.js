@@ -235,18 +235,17 @@ export class SealedDraft extends Draft {
     /**
      * Handle the SealedDraft. Send packs to clients and end.
      */
-    handle() {
+    async handle() {
         const clientsArray = this.clients.array();
         for (const client of clientsArray) {
-            console.log(this.setCodes);
-            for (let i=0; i < 6; i ++) {
-                client.draftPack(createBooster(this.setCodes[i]));
-            }
+            this.setCodes.forEach((set) => {
+                client.draftPack(createBooster(set));
+            });
         }
 
-        for (let client of clientsArray) {
+        clientsArray.forEach((client) => {
             client.sendPool();
-        }
+        });
 
         this.cleanupCallback(this);
     }

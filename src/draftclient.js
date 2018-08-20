@@ -76,8 +76,8 @@ export class DraftClient {
      * @param {Array<Card>} cardArray The array of cards to add to the client
      */
     draftPack(cardArray) {
-        for (const card of cardArray) {
+        cardArray.forEach((card) => {
             this.draftCard(card);
-        }
+        });
     }
 }
