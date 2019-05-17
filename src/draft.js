@@ -5,7 +5,7 @@ import {Collection} from 'discord.js';
 import {Sets, createBooster} from './cards.js';
 import {rotate} from './util.js';
 
-const defaultSet = 'M19';
+const defaultSet = 'WAR';
 
 /**
  * @callback textResponseCallback
@@ -20,7 +20,7 @@ const defaultSet = 'M19';
  */
 
  /**
-  * Represents a Draft of any kind
+  * Base class for a Draft of any kind
   */
 export class Draft {
     /**

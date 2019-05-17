@@ -44,3 +44,13 @@ export function rotate(arr, count) {
 export function isNumber(maybeNumber) {
     return !isNaN(parseFloat(maybeNumber)) && isFinite(maybeNumber);
 }
+
+/**
+ * Flips a boolean coin with a probability of true equal to (numerator/denominator).
+ * @param {number} numerator The numerator
+ * @param {number} denominator The denominator
+ * @return {Boolean} Whether the flip landed true or false
+ */
+export function rollFraction(numerator, denominator) {
+    return Math.random() < (numerator / denominator);
+}
