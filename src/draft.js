@@ -2,8 +2,9 @@
 
 import {DraftClient} from './draftclient.js';
 import {Collection} from 'discord.js';
-import {Sets, createBooster} from './cards.js';
+import {createBooster} from './cards.js';
 import {rotate} from './util.js';
+import {setExists} from './sets.js';
 
 const defaultSet = 'WAR';
 
@@ -173,7 +174,7 @@ export class BoosterDraft extends PackDraft {
         super(cleanupCallback);
         this.setCodes = [set1, set2, set3];
         for (let i = 0; i < this.setCodes.length; i++) {
-            if (!this.setCodes[i] || !Sets.hasOwnProperty(this.setCodes[i])) {
+            if (!this.setCodes[i] || !setExists(this.setCodes[i])) {
                 this.setCodes[i] = defaultSet;
             }
         }
@@ -218,7 +219,7 @@ export class SealedDraft extends Draft {
             for (let i=0; i < setsLoopCount; i++) {
                 for (let j=0; j < setsArray.length; j++) {
                     const setCode = setsArray[j];
-                    if (!setCode || !Sets.hasOwnProperty(setCode)) {
+                    if (!setCode || !setExists(setCode)) {
                         this.setCodes.push(defaultSet);
                     } else {
                         this.setCodes.push(setCode);

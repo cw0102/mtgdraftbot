@@ -1,46 +1,70 @@
 'use strict';
 
 import {rollFraction, popSample, sample} from './util.js';
-import {readFileSync} from 'fs';
-
-export const Sets = JSON.parse(readFileSync('data/AllSets.json'));
+import {getSet} from './sets.js';
 
 export const basicLands = Object.freeze(['Forest', 'Island', 'Mountain', 'Swamp', 'Plains']);
 
-/*
+/**
+ * Representation of a Card
+ */
 export class Card {
+    /**
+     * @param {string} artist Artist name
+     * @param {number} cmc Converted mana cost
+     * @param {Array<string>} colorIdentity Color identity (EDH)
+     * @param {Array<string>} colors Colors
+     * @param {string} flavor Flavor text
+     * @param {string} uuid Unique identifier
+     * @param {string} layout Card layout type (e.g. normal, split, transform, etc.)
+     * @param {string} manaCost The manacost (e.g. {2}{G}{G})
+     * @param {string} name The card name (English)
+     * @param {string} number The card number in its set
+     * @param {string} power Power, if applicable
+     * @param {string} rarity The rarity (e.g. common, uncommon, rare, mythic rare)
+     * @param {Array<string>} subtypes The card's subtypes (e.g. Goblin, Elf, Sliver)
+     * @param {Array<string>} supertypes The card's supertypes (e.g. World, Basic)
+     * @param {string} text The rules text of the card
+     * @param {number} toughness Toughness, if applicable
+     * @param {string} type The full type line
+     * @param {Array<string>} types The card's types (e.g. Enchantment, Creature)
+     */
+    constructor(artist, cmc, colorIdentity, colors, flavor, uuid, layout, manaCost,
+        name, number, power, rarity, subtypes, supertypes, text, toughness, type, types) {
+        this.artist = artist;
+        this.cmc = cmc;
+        this.colorIdentity = colorIdentity;
+        this.colors = colors;
+        this.flavor = flavor;
+        this.uuid = uuid;
+        this.layout = layout;
+        this.manaCost = manaCost;
+        this.name = name;
+        this.number = number;
+        this.power = power;
+        this.rarity = rarity;
+        this.subtypes = subtypes;
+        this.supertypes = supertypes;
+        this.text = text;
+        this.toughness = toughness;
+        this.type = type;
+        this.types = types;
 
-    constructor() {
-        this.artist = '';
-        this.cmc = 0;
-        this.colorIdentity = [];
-        this.colors = [];
-        this.flavor = '';
-        this.id = '';
-        this.imageName = '';
-        this.layout = '';
-        this.manaCost = '';
-        this.multiverseid = 0;
-        this.name = '';
-        this.number = '';
-        this.power = 0;
-        this.rarity = '';
-        this.subtypes = [];
-        this.text = '';
-        this.toughness = 0;
-        this.type = '';
-        this.types = [];
-
-        Object.seal(this);
+        Object.freeze(this);
     }
 }
-*/
 
 // Booster rarity identifiers
-const MYTHIC_RARITY = 'mythic rare';
-const RARE_RARITY = 'rare';
-const UNCOMMON_RARITY = 'uncommon';
-const COMMON_RARITY = 'common';
+const BOOSTER_RARITY_MYTHIC = 'mythic rare';
+const BOOSTER_RARITY_RARE = 'rare';
+const BOOSTER_RARITY_UNCOMMON = 'uncommon';
+const BOOSTER_RARITY_COMMON = 'common';
+
+// Card rarity identifiers
+export const CARD_RARITY_MYTHIC = 'mythic';
+export const CARD_RARITY_RARE = 'rare';
+export const CARD_RARITY_UNCOMMON = 'uncommon';
+export const CARD_RARITY_COMMON = 'common';
 
 /**
  * A set of cards sorted by rarity
@@ -48,14 +72,14 @@ const COMMON_RARITY = 'common';
 class SortedCardSet {
     /**
      * Base constructor for SortedCardSet
-     * @param {Array} cards Set of cards to sort
+     * @param {Array<Card>} cards Set of cards to sort
      */
     constructor(cards) {
-        this.mythics = cards.filter((card) => card.rarity == 'Mythic Rare');
-        this.rares = cards.filter((card) => card.rarity == 'Rare');
-        this.uncommons = cards.filter((card) => card.rarity == 'Uncommon');
-        this.commons = cards.filter((card) => card.rarity == 'Common');
-        this.basics = cards.filter((card) => card.rarity == 'Basic Land').reduce((prev, current) => {
+        this.mythics = cards.filter((card) => card.rarity == CARD_RARITY_MYTHIC);
+        this.rares = cards.filter((card) => card.rarity == CARD_RARITY_RARE);
+        this.uncommons = cards.filter((card) => card.rarity == CARD_RARITY_UNCOMMON);
+        this.commons = cards.filter((card) => card.rarity == CARD_RARITY_COMMON && !(card.supertypes.includes('Basic') && card.types.includes('Land')));
+        this.basics = cards.filter((card) => card.supertypes.includes('Basic') && card.types.includes('Land')).reduce((prev, current) => {
             if (!prev.has(current.name)) {
                 prev.set(current.name, []);
             }
@@ -73,7 +97,7 @@ class SortedCardSet {
  * @return {Array} A pack of the given `set`
  */
 export function createBooster(set) {
-    const currentSet = Sets[set];
+    const currentSet = getSet(set);
     const cards = currentSet.cards;
     const packLayout = currentSet['booster'].slice();
 
@@ -90,13 +114,13 @@ export function createBooster(set) {
     for (let i = 0; i < packLayout.length; i++) {
         let current = packLayout[i];
         if (current instanceof Array) {
-            if (sortedCards.mythics.length > 0 && current.length === 2 && current.includes(RARE_RARITY) && current.includes(MYTHIC_RARITY)) {
+            if (sortedCards.mythics.length > 0 && current.length === 2 && current.includes(BOOSTER_RARITY_RARE) && current.includes(BOOSTER_RARITY_MYTHIC)) {
                 if (rollFraction(1, 8)) { // ~1/8 of rare = mythic
                     pack.push(popSample(sortedCards.mythics));
                 } else {
                     pack.push(popSample(sortedCards.rares));
                 }
-            } else if (current.length === 2 && current.includes(UNCOMMON_RARITY) && current.includes(RARE_RARITY)) {
+            } else if (current.length === 2 && current.includes(BOOSTER_RARITY_UNCOMMON) && current.includes(BOOSTER_RARITY_RARE)) {
                 // ~1/3 of the slots for sets that share 2 rare and uncommon slots are rares
                 // This is mostly really old sets: Arabian Nights, Fallen Empires, The Dark, Homelands.
                 // This is an approximation. The real rarities of these sets were extremely convoluted
@@ -108,13 +132,13 @@ export function createBooster(set) {
                 }
             }
         }
-        if (current === COMMON_RARITY) {
+        if (current === BOOSTER_RARITY_COMMON) {
             pack.push(popSample(sortedCards.commons));
-        } else if (current === UNCOMMON_RARITY) {
+        } else if (current === BOOSTER_RARITY_UNCOMMON) {
             pack.push(popSample(sortedCards.uncommons));
-        } else if (current === RARE_RARITY) {
+        } else if (current === BOOSTER_RARITY_RARE) {
             pack.push(popSample(sortedCards.rares));
-        } else if (current === MYTHIC_RARITY) {
+        } else if (current === BOOSTER_RARITY_MYTHIC) {
             pack.push(popSample(sortedCards.mythics));
         } else if (current === 'land') {
             if (set === 'M19') {
@@ -177,15 +201,15 @@ function prePackageInsertDOM(cards, pack, packLayout) {
     if (randomRoll < 0.03125) { // 1/32
         // give a mythic
         pack.push(sample(legendsSorted.mythics));
-        removeFromPackLayout(packLayout, MYTHIC_RARITY);
+        removeFromPackLayout(packLayout, BOOSTER_RARITY_MYTHIC);
     } else if (randomRoll < 0.25) { // 7/32
         // give a rare
         pack.push(sample(legendsSorted.rares));
-        removeFromPackLayout(packLayout, RARE_RARITY);
+        removeFromPackLayout(packLayout, BOOSTER_RARITY_RARE);
     } else { // 24/32 = 3/4 = 0.75
         // give an uncommon
         pack.push(sample(legendsSorted.uncommons));
-        removeFromPackLayout(packLayout, UNCOMMON_RARITY);
+        removeFromPackLayout(packLayout, BOOSTER_RARITY_UNCOMMON);
     }
 }
 
@@ -198,21 +222,20 @@ function prePackageInsertDOM(cards, pack, packLayout) {
 function prePackageInsertWAR(cards, pack, packLayout) {
     const planeswalkers = cards.filter((card) => card.types.includes('Planeswalker'));
     const planeswalkersSorted = new SortedCardSet(planeswalkers);
+    const randomRoll = Math.random();
 
-    if (randomRoll < 0.0714) {
-        if (Math.random() < 0.125) {
-            // give a mythic
-            pack.push(sample(planeswalkersSorted.mythics));
-            removeFromPackLayout(MYTHIC_RARITY);
-        } else {
-            // give a rare
-            pack.push(sample(planeswalkersSorted.rares));
-            removeFromPackLayout(RARE_RARITY);
-        }
-    } else if (randomRoll >= 0.0714 && randomRoll < 0.2857) {
+    if (randomRoll < 0.03125) { // 1/32
+        // give a mythic
+        pack.push(sample(planeswalkersSorted.mythics));
+        removeFromPackLayout(packLayout, BOOSTER_RARITY_MYTHIC);
+    } else if (randomRoll < 0.25) { // 7/32
+        // give a rare
+        pack.push(sample(planeswalkersSorted.rares));
+        removeFromPackLayout(packLayout, BOOSTER_RARITY_RARE);
+    } else { // 24/32 = 3/4 = 0.75
         // give an uncommon
         pack.push(sample(planeswalkersSorted.uncommons));
-        removeFromPackLayout(UNCOMMON_RARITY);
+        removeFromPackLayout(packLayout, BOOSTER_RARITY_UNCOMMON);
     }
 }
 
@@ -239,4 +262,14 @@ function removeFromPackLayout(packLayout, rarity) {
     }
 
     return false;
+}
+
+/**
+ * Gets a link to Scryfall for the given set and card number
+ * @param {string} set The set code, e.g. "M15"
+ * @param {number} cardNumber The card number in the set
+ * @return {string} A link to the card on Scryfall
+ */
+export function getScryfallLink(set, cardNumber) {
+    return `http://scryfall.com/card/${set}/${cardNumber}`;
 }
