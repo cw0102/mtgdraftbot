@@ -10,6 +10,7 @@ export const basicLands = Object.freeze(['Forest', 'Island', 'Mountain', 'Swamp'
  */
 export class Card {
     /**
+     * @param {string} code The set code (e.g. M20)
      * @param {string} artist Artist name
      * @param {number} cmc Converted mana cost
      * @param {Array<string>} colorIdentity Color identity (EDH)
@@ -29,8 +30,9 @@ export class Card {
      * @param {string} type The full type line
      * @param {Array<string>} types The card's types (e.g. Enchantment, Creature)
      */
-    constructor(artist, cmc, colorIdentity, colors, flavor, uuid, layout, manaCost,
+    constructor(code, artist, cmc, colorIdentity, colors, flavor, uuid, layout, manaCost,
         name, number, power, rarity, subtypes, supertypes, text, toughness, type, types) {
+        this.code = code;
         this.artist = artist;
         this.cmc = cmc;
         this.colorIdentity = colorIdentity;
@@ -249,8 +251,7 @@ function removeFromPackLayout(packLayout, rarity) {
     for (let i = 0; i < packLayout.length; i++) {
         const current = packLayout[i];
         if (current instanceof Array) {
-            if (current.includes(rarity)) {
-                packLayout.splice(i, 1);
+            if (removeFromPackLayout(current, rarity)) {
                 return true;
             }
         } else {
@@ -267,9 +268,9 @@ function removeFromPackLayout(packLayout, rarity) {
 /**
  * Gets a link to Scryfall for the given set and card number
  * @param {string} set The set code, e.g. "M15"
- * @param {number} cardNumber The card number in the set
+ * @param {string} cardNumber The card number in the set
  * @return {string} A link to the card on Scryfall
  */
 export function getScryfallLink(set, cardNumber) {
-    return `http://scryfall.com/card/${set}/${cardNumber}`;
+    return `http://scryfall.com/card/${set.toLowerCase()}/${cardNumber}`;
 }

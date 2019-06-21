@@ -38,10 +38,11 @@ export function getSet(setCode) {
     result.name = setRow.name;
     result.booster = JSON.parse(setRow.booster.replace(/'/g, '"'));
 
-    const queryCards = database.prepare(`SELECT artist, convertedManaCost, colorIdentity, colors, flavorText, uuid, layout, manaCost, name, number, power, rarity, subtypes, supertypes, text, toughness, type, types FROM cards WHERE setCode=?`);
+    const queryCards = database.prepare(`SELECT artist, convertedManaCost, colorIdentity, colors, flavorText, uuid, layout, manaCost, name, number, power, rarity, subtypes, supertypes, text, toughness, type, types FROM cards WHERE setCode=? AND number NOT LIKE "%★"`);
     const cardResult = queryCards.iterate(setCode);
     for (const card of cardResult) {
         result.cards.push(new Card(
+            setCode,
             card.artist,
             card.convertedManaCost,
             card.colorIdentity.split(', '),

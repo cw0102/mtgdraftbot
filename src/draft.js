@@ -2,11 +2,11 @@
 
 import {DraftClient} from './draftclient.js';
 import {Collection} from 'discord.js';
-import {createBooster} from './cards.js';
+import {Card, createBooster} from './cards.js';
 import {rotate} from './util.js';
 import {setExists} from './sets.js';
 
-const defaultSet = 'WAR';
+export const defaultSet = 'WAR';
 
 /**
  * @callback textResponseCallback
@@ -16,7 +16,7 @@ const defaultSet = 'WAR';
 
 /**
  * @callback cardChoiceCallback
- * @param {Array<object>} cardArray
+ * @param {Array<Card>} cardArray
  * @returns {Promise} A promise with resolved data
  */
 

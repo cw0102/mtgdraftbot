@@ -2,7 +2,8 @@
 
 import {Client, User, Message, DMChannel, Collection} from 'discord.js';
 import {discordToken} from './config.json';
-import {Draft, BoosterDraft, SealedDraft} from './draft.js';
+import {Draft, BoosterDraft, SealedDraft, defaultSet} from './draft.js';
+import {getScryfallLink} from './cards.js';
 import {isNumber} from './util.js';
 import {EventEmitter} from 'events';
 
@@ -83,8 +84,8 @@ function textCallback(user, text) {
  * @return {Promise<Array>} A promise that resolves with the user response
  */
 function cardChoiceCallback(user, cardArray) {
-    const text = cardArray.reduce((prev, current, index) => {
-        return prev + `${index+1}: ${current.name}\n`;
+    const text = cardArray.reduce((outStr, card, index) => {
+        return outStr + `${index+1}: ${card.name} - <${getScryfallLink(card.code, card.number)}>\n`;
     }, '');
     sendToClientDirect(user, text);
     return new Promise((resolve, reject) => {
@@ -166,7 +167,7 @@ function messageHandler(msg) {
             }
 
             case 'help': {
-                msg.reply('Help here!');
+                msg.reply('__!draft__ - Start a draft\n__!draft__ <setcode> <setcode> <setcode> - Start a draft with the given packs\n__!begindraft__ - Lock in participants and begin the draft\n__!joindraft__ - Join an open draft in the current room\n__!stopdraft__ - Cancel a waiting draft');
                 break;
             }
         }
@@ -199,14 +200,14 @@ function openDraft(msg, commands) {
 
             case 'sealed': {
                 draftObj = new SealedDraft(cleanupDraft);
-                msg.channel.send(`${msg.author} started a Sealed Draft! The packs will use the following set:\n [M19]\n Type \`!joindraft\` to join. The creator can start the draft with \`!begindraft\`, or cancel it with \`!stopdraft\`.`);
+                msg.channel.send(`${msg.author} started a Sealed Draft! The packs will use the following set:\n [${defaultSet}]\n Type \`!joindraft\` to join. The creator can start the draft with \`!begindraft\`, or cancel it with \`!stopdraft\`.`);
                 break;
             }
 
             case 'booster':
             default: {
                 draftObj = new BoosterDraft(cleanupDraft);
-                msg.channel.send(`${msg.author} started a Booster Draft! The packs will use the following sets:\n Round 1: [M19], Round 2: [M19], Round 3: [M19]\n Type \`!joindraft\` to join. The creator can start the draft with \`!begindraft\`, or cancel it with \`!stopdraft\`.`);
+                msg.channel.send(`${msg.author} started a Booster Draft! The packs will use the following sets:\n Round 1: [${defaultSet}], Round 2: [${defaultSet}], Round 3: [${defaultSet}]\n Type \`!joindraft\` to join. The creator can start the draft with \`!begindraft\`, or cancel it with \`!stopdraft\`.`);
                 break;
             }
         }
