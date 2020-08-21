@@ -8,17 +8,17 @@ const DBPath = 'data/AllSets.sqlite';
  * A set of cards
  */
 class MTGSet {
-    /**
+  /**
      * Constructor for an MTGSet
      * @param {string} code The set code
      */
-    constructor(code) {
-        this.code = code;
-        this.name = '';
-        this.booster = [];
-        this.cards = [];
-        Object.seal(this);
-    }
+  constructor(code) {
+    this.code = code;
+    this.name = '';
+    this.booster = [];
+    this.cards = [];
+    Object.seal(this);
+  }
 }
 
 /**
@@ -27,44 +27,44 @@ class MTGSet {
  * @return {MTGSet} An array of the cards in the set
  */
 export function getSet(setCode) {
-    const database = new Database(DBPath);
-    const result = new MTGSet(setCode);
+  const database = new Database(DBPath);
+  const result = new MTGSet(setCode);
 
-    const querySet = database.prepare(`SELECT name, boosterV3 AS booster FROM sets WHERE code=?`);
-    const setRow = querySet.get(setCode);
-    if (querySet === undefined) {
-        return undefined;
-    }
-    result.name = setRow.name;
-    result.booster = JSON.parse(setRow.booster.replace(/'/g, '"'));
+  const querySet = database.prepare(`SELECT name, boosterV3 AS booster FROM sets WHERE code=?`);
+  const setRow = querySet.get(setCode);
+  if (querySet === undefined) {
+    return undefined;
+  }
+  result.name = setRow.name;
+  result.booster = JSON.parse(setRow.booster.replace(/'/g, '"'));
 
-    const queryCards = database.prepare(`SELECT artist, convertedManaCost, colorIdentity, colors, flavorText, uuid, layout, manaCost, name, number, power, rarity, subtypes, supertypes, text, toughness, type, types FROM cards WHERE setCode=? AND number NOT LIKE "%★"`);
-    const cardResult = queryCards.iterate(setCode);
-    for (const card of cardResult) {
-        result.cards.push(new Card(
-            setCode,
-            card.artist,
-            card.convertedManaCost,
-            card.colorIdentity.split(', '),
-            card.colors.split(', '),
-            card.flavorText,
-            card.uuid,
-            card.layout,
-            card.manaCost,
-            card.name,
-            card.number,
-            card.power,
-            card.rarity,
-            card.subtypes.split(', '),
-            card.supertypes.split(', '),
-            card.text,
-            card.toughness,
-            card.type,
-            card.types.split(', ')
-        ));
-    }
+  const queryCards = database.prepare(`SELECT artist, convertedManaCost, colorIdentity, colors, flavorText, uuid, layout, manaCost, name, number, power, rarity, subtypes, supertypes, text, toughness, type, types FROM cards WHERE setCode=? AND number NOT LIKE '%★'`);
+  const cardResult = queryCards.iterate(setCode);
+  for (const card of cardResult) {
+    result.cards.push(new Card(
+        setCode,
+        card.artist,
+        card.convertedManaCost,
+        card.colorIdentity.split(', '),
+        card.colors.split(', '),
+        card.flavorText,
+        card.uuid,
+        card.layout,
+        card.manaCost,
+        card.name,
+        card.number,
+        card.power,
+        card.rarity,
+        card.subtypes.split(', '),
+        card.supertypes.split(', '),
+        card.text,
+        card.toughness,
+        card.type,
+        card.types.split(', '),
+    ));
+  }
 
-    return result;
+  return result;
 }
 
 /**
@@ -73,13 +73,13 @@ export function getSet(setCode) {
  * @return {boolean} `true` if a set exists with the given code, else `false`
  */
 export function setExists(setCode) {
-    const database = new Database(DBPath);
+  const database = new Database(DBPath);
 
-    const query = database.prepare(`SELECT code FROM sets WHERE code=?`);
-    const result = query.get(setCode);
-    if (result === undefined) {
-        return false;
-    } else {
-        return true;
-    }
+  const query = database.prepare(`SELECT code FROM sets WHERE code=?`);
+  const result = query.get(setCode);
+  if (result === undefined) {
+    return false;
+  } else {
+    return true;
+  }
 }

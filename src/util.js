@@ -7,7 +7,7 @@
  * @return {any} The popped element
  */
 export function popSample(array) {
-    return array.splice(Math.floor(Math.random() * array.length), 1)[0];
+  return array.splice(Math.floor(Math.random() * array.length), 1)[0];
 }
 
 /**
@@ -16,7 +16,7 @@ export function popSample(array) {
  * @return {any} The sampled element
  */
 export function sample(array) {
-    return array[Math.floor(Math.random() * array.length)];
+  return array[Math.floor(Math.random() * array.length)];
 }
 
 /**
@@ -27,13 +27,13 @@ export function sample(array) {
  * @param {number} count Number of places to shift
  */
 export function rotate(arr, count) {
-    let len = arr.length >>> 0; // convert to uint
-    count = count >> 0; // convert to int
+  const len = arr.length >>> 0; // convert to uint
+  count = count >> 0; // convert to int
 
-    // convert count to value in range [0, len)
-    count = ((count % len) + len) % len;
+  // convert count to value in range [0, len)
+  count = ((count % len) + len) % len;
 
-    Array.prototype.push.apply(arr, Array.prototype.splice.call(arr, 0, count));
+  Array.prototype.push.apply(arr, Array.prototype.splice.call(arr, 0, count));
 }
 
 /**
@@ -42,7 +42,7 @@ export function rotate(arr, count) {
  * @return {Boolean} If `maybeNumber` is a number
  */
 export function isNumber(maybeNumber) {
-    return !isNaN(parseFloat(maybeNumber)) && isFinite(maybeNumber);
+  return !isNaN(parseFloat(maybeNumber)) && isFinite(maybeNumber);
 }
 
 /**
@@ -52,5 +52,5 @@ export function isNumber(maybeNumber) {
  * @return {Boolean} Whether the flip landed true or false
  */
 export function rollFraction(numerator, denominator) {
-    return Math.random() < (numerator / denominator);
+  return Math.random() < (numerator / denominator);
 }
